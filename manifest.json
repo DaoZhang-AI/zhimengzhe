@@ -3,9 +3,9 @@
     "loading_order": 100,
     "requires": [],
     "optional": [],
-    "js": "index.js?v=0.28.3",
-    "css": "style.css?v=0.28.3",
+    "js": "index.js?v=0.28.4",
+    "css": "style.css?v=0.28.4",
     "author": "@不如就叫我道长吧",
-    "version": "0.28.3",
+    "version": "0.28.4",
     "homePage": ""
 }
