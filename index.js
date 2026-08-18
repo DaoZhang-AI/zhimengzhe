@@ -28,7 +28,7 @@ import { hljs } from '../../../../lib.js';
 
 /** 跟 manifest.json 的 version 手动保持一致。酒馆加载扩展脚本的 URL 不带版本号
  *  (extensions.js:819),浏览器和 CDN 都可能喂旧副本,靠这行在控制台辨认在跑哪一版。 */
-const VERSION = '0.28.2';
+const VERSION = '0.28.3';
 
 /** 2026-08-17 连目录带内部 id 一起从「美梦工具箱」改成「织梦者」。
  *
@@ -2343,8 +2343,8 @@ const MY_PLUGINS = [
         desc: '你现在正在用的这个。',
     },
     {
-        folder: 'zhimeng-phone',
-        name: '📱 小手机',
+        folder: 'zhimeng-os',
+        name: '📱 织梦OS',
         url: '',
         desc: '模拟手机,能和角色在线上聊天,以后直播也挂在里面。还在做。',
     },
@@ -2356,7 +2356,13 @@ const INSTALL_GLOBAL = true;
 
 /**
  * 问酒馆现在装了哪些扩展。
- * @returns {Promise<Map<string, string>>} 文件夹名 → 'local' | 'global'
+ *
+ * ⚠️ 键一律转成小写,因为**文件夹名是跟着用户粘贴的那个地址的大小写走的**
+ * (src/endpoints/extensions.js:122 直接取地址最后一段)。GitHub 地址大小写不敏感,
+ * 同一个仓库粘成 .../ZMengOS 和 .../zmengos 都打得开,但装出来的文件夹名不一样。
+ * 死抠大小写的话,清单里那一项会永远显示"还没装"。
+ *
+ * @returns {Promise<Map<string, {folder: string, type: string}>>} 小写文件夹名 → 真实名字和类型
  */
 async function fetchInstalledFolders() {
     const map = new Map();
@@ -2368,7 +2374,9 @@ async function fetchInstalledFolders() {
         const list = await response.json();
         for (const item of Array.isArray(list) ? list : []) {
             if (!String(item?.name || '').startsWith('third-party/')) continue;
-            map.set(String(item.name).slice('third-party/'.length), item.type);
+            // 真实名字要留着:查版本和更新都要拿它去服务端拼路径,不能用小写那份
+            const folder = String(item.name).slice('third-party/'.length);
+            map.set(folder.toLowerCase(), { folder, type: item.type });
         }
     } catch (error) {
         console.warn('[织梦者] 拿不到已装扩展清单', error);
@@ -2414,8 +2422,8 @@ async function renderMyPlugins() {
     const blocks = [];
 
     for (const item of MY_PLUGINS) {
-        const type = installed.get(item.folder);
-        const isInstalled = Boolean(type);
+        const hit = installed.get(item.folder.toLowerCase());
+        const isInstalled = Boolean(hit);
         let status = '';
         let action = '';
 
@@ -2427,17 +2435,17 @@ async function renderMyPlugins() {
                 ? `<div class="menu_button mmtk_install" data-url="${escapeHtml(item.url)}">安装</div>`
                 : '';
         } else {
-            const git = await fetchGitInfo(item.folder, type === 'global');
+            const git = await fetchGitInfo(hit.folder, hit.type === 'global');
 
             // 这里必须看 hash,不能看 upToDate,理由见本段开头的注释
             if (!git || !git.hash) {
                 status = '<span class="mmtk_hint mmtk_bad">已装,但是手动放进去的,没有 git,更新不了</span>';
             } else if (git.upToDate) {
                 status = `<span class="mmtk_hint">已装 · ${escapeHtml(git.branch || '?')} · ${escapeHtml(git.hash.slice(0, 7))} · 已是最新</span>`;
-                action = `<div class="menu_button mmtk_update" data-folder="${escapeHtml(item.folder)}" data-global="${type === 'global'}">还是更新一下</div>`;
+                action = `<div class="menu_button mmtk_update" data-folder="${escapeHtml(hit.folder)}" data-global="${hit.type === 'global'}">还是更新一下</div>`;
             } else {
                 status = `<span class="mmtk_hint">已装 · ${escapeHtml(git.branch || '?')} · ${escapeHtml(git.hash.slice(0, 7))} · <b>有新版</b></span>`;
-                action = `<div class="menu_button mmtk_update" data-folder="${escapeHtml(item.folder)}" data-global="${type === 'global'}">更新</div>`;
+                action = `<div class="menu_button mmtk_update" data-folder="${escapeHtml(hit.folder)}" data-global="${hit.type === 'global'}">更新</div>`;
             }
         }
 
