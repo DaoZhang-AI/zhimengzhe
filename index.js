@@ -28,7 +28,7 @@ import { hljs } from '../../../../lib.js';
 
 /** 跟 manifest.json 的 version 手动保持一致。酒馆加载扩展脚本的 URL 不带版本号
  *  (extensions.js:819),浏览器和 CDN 都可能喂旧副本,靠这行在控制台辨认在跑哪一版。 */
-const VERSION = '0.28.4';
+const VERSION = '0.29.0';
 
 /** 2026-08-17 连目录带内部 id 一起从「美梦工具箱」改成「织梦者」。
  *
@@ -2345,7 +2345,7 @@ const MY_PLUGINS = [
     {
         folder: 'zhimengos',
         name: '📱 织梦OS',
-        url: '',
+        url: 'https://github.com/DaoZhang-AI/zhimengos',
         desc: '模拟手机,能和角色在线上聊天,以后直播也挂在里面。还在做。',
     },
 ];
