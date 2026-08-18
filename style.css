@@ -389,3 +389,15 @@ body.mmtk-collapse-code .mes_text pre {
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: 8px;
 }
+
+/* 有新版或者有没装的新插件时,名字旁边挂一个 NEW */
+#mmtk_settings .mmtk_new {
+    margin-left: 6px;
+    padding: 1px 5px;
+    border-radius: 6px;
+    font-size: calc(var(--mainFontSize) * 0.7);
+    font-weight: bold;
+    vertical-align: middle;
+    background-color: #e5484d;
+    color: #fff;
+}

@@ -28,7 +28,7 @@ import { hljs } from '../../../../lib.js';
 
 /** 跟 manifest.json 的 version 手动保持一致。酒馆加载扩展脚本的 URL 不带版本号
  *  (extensions.js:819),浏览器和 CDN 都可能喂旧副本,靠这行在控制台辨认在跑哪一版。 */
-const VERSION = '0.29.0';
+const VERSION = '0.30.0';
 
 /** 2026-08-17 连目录带内部 id 一起从「美梦工具箱」改成「织梦者」。
  *
@@ -2416,7 +2416,7 @@ async function fetchGitInfo(folder, isGlobal) {
 /** 一行一个插件,状态由真数据决定,不写死 */
 async function renderMyPlugins() {
     const $out = $('#mmtk_store_out');
-    $out.html('<div class="mmtk_hint">正在看...</div>');
+    $out.html('<div class="mmtk_hint">正在查...</div>');
 
     const installed = await fetchInstalledFolders();
     const blocks = [];
@@ -2426,6 +2426,7 @@ async function renderMyPlugins() {
         const isInstalled = Boolean(hit);
         let status = '';
         let action = '';
+        let isNew = false;
 
         if (!isInstalled) {
             status = item.url
@@ -2434,6 +2435,7 @@ async function renderMyPlugins() {
             action = item.url
                 ? `<div class="menu_button mmtk_install" data-url="${escapeHtml(item.url)}">安装</div>`
                 : '';
+            isNew = Boolean(item.url);
         } else {
             const git = await fetchGitInfo(hit.folder, hit.type === 'global');
 
@@ -2444,6 +2446,7 @@ async function renderMyPlugins() {
                 status = `<span class="mmtk_hint">已装 · ${escapeHtml(git.branch || '?')} · ${escapeHtml(git.hash.slice(0, 7))} · 已是最新</span>`;
                 action = `<div class="menu_button mmtk_update" data-folder="${escapeHtml(hit.folder)}" data-global="${hit.type === 'global'}">还是更新一下</div>`;
             } else {
+                isNew = true;
                 status = `<span class="mmtk_hint">已装 · ${escapeHtml(git.branch || '?')} · ${escapeHtml(git.hash.slice(0, 7))} · <b>有新版</b></span>`;
                 action = `<div class="menu_button mmtk_update" data-folder="${escapeHtml(hit.folder)}" data-global="${hit.type === 'global'}">更新</div>`;
             }
@@ -2451,7 +2454,7 @@ async function renderMyPlugins() {
 
         blocks.push(`
             <div class="mmtk_store_row">
-                <div><b>${escapeHtml(item.name)}</b></div>
+                <div><b>${escapeHtml(item.name)}</b>${isNew ? '<span class="mmtk_new">NEW</span>' : ''}</div>
                 <div class="mmtk_hint">${escapeHtml(item.desc)}</div>
                 <div>${status}</div>
                 ${action ? `<div class="mmtk_buttons">${action}</div>` : ''}
@@ -2746,7 +2749,7 @@ function renderPanel() {
                             装的是<b>酒馆自己那套安装流程</b>,该弹的第三方代码提醒照样弹。
                             <b>装完或更新完都要刷新一次页面</b>,插件代码是开页面时才加载的。</div>
                         <div class="mmtk_buttons">
-                            <div id="mmtk_store_refresh" class="menu_button">看看状态</div>
+                            <div id="mmtk_store_refresh" class="menu_button">刷新查看插件更新状态</div>
                         </div>
                         <div id="mmtk_store_out"></div>
                     </div>
