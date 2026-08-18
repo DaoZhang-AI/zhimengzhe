@@ -1,0 +1,391 @@
+/* 🦋 织梦者 */
+
+/* 分类抽屉:让「⚡ 酒馆优化」「🧩 我的插件」看着像两块东西,
+   而不是外层面板里两行加粗字。 */
+#mmtk_settings .mmtk_cat {
+    margin: 8px 0;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#mmtk_settings .mmtk_cat_header {
+    padding: 7px 10px;
+    background-color: var(--black30a);
+}
+
+#mmtk_settings .mmtk_cat > .inline-drawer-content {
+    padding: 0 10px 8px;
+}
+
+/* 我的插件:一行一个,别糊成一片 */
+#mmtk_settings .mmtk_store_row {
+    margin: 8px 0;
+    padding: 8px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+}
+
+#mmtk_settings .mmtk_hint {
+    font-size: calc(var(--mainFontSize) * 0.85);
+    opacity: 0.7;
+    margin: 3px 0;
+    line-height: 1.4;
+}
+
+#mmtk_settings .mmtk_buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+}
+
+#mmtk_settings .mmtk_total {
+    margin: 10px 0;
+    padding: 8px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    text-align: center;
+}
+
+#mmtk_settings .mmtk_section {
+    margin: 12px 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+}
+
+#mmtk_settings .mmtk_row,
+#mmtk_settings .mmtk_item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    font-size: calc(var(--mainFontSize) * 0.9);
+}
+
+/* 预设名可能很长,让它占满剩余宽度并省略,不要把体积挤出去 */
+#mmtk_settings .mmtk_row_name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#mmtk_settings .mmtk_row_size {
+    flex: 0 0 auto;
+    opacity: 0.85;
+    font-variant-numeric: tabular-nums;
+}
+
+#mmtk_settings .mmtk_row_pct {
+    flex: 0 0 3.5em;
+    text-align: right;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+}
+
+#mmtk_settings .mmtk_list {
+    max-height: 40vh;
+    overflow-y: auto;
+    margin: 6px 0;
+    padding: 4px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
+}
+
+#mmtk_settings .mmtk_item {
+    cursor: pointer;
+}
+
+#mmtk_settings .mmtk_item.mmtk_disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#mmtk_settings .mmtk_tag {
+    flex: 0 0 auto;
+    font-size: calc(var(--mainFontSize) * 0.75);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--SmartThemeBorderColor);
+}
+
+#mmtk_settings .mmtk_savings {
+    margin: 6px 0;
+    padding: 6px;
+    border-radius: 6px;
+    background-color: var(--black30a);
+    font-size: calc(var(--mainFontSize) * 0.9);
+}
+
+#mmtk_settings .mmtk_ok {
+    color: var(--golden);
+    margin: 4px 0;
+}
+
+#mmtk_settings .mmtk_bad {
+    color: var(--warning);
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
+#mmtk_settings hr {
+    margin: 12px 0;
+    opacity: 0.3;
+}
+
+/* 酒馆的 .menu_button 自带 width: min-content(style.css:3825),
+   在窄容器里文字会一个字一个字往下折,看着像竖排。这里按内容撑开并禁止折行。 */
+#mmtk_settings .menu_button,
+.mmtk_popup .menu_button {
+    width: auto;
+    min-width: 2.5em;
+    white-space: nowrap;
+    justify-content: center;
+}
+
+#mmtk_settings .mmtk_buttons,
+.mmtk_popup .mmtk_buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 当前选中的那个值 */
+#mmtk_settings .menu_button.mmtk_current,
+.mmtk_popup .menu_button.mmtk_current {
+    filter: none;
+    border-color: var(--golden);
+    font-weight: bold;
+}
+
+#mmtk_settings .mmtk_numrow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 10px;
+    font-size: calc(var(--mainFontSize) * 0.9);
+}
+
+#mmtk_settings .mmtk_numrow input[type="number"] {
+    width: 6em;
+    flex: 0 0 auto;
+}
+
+/* 折叠长代码块。挂在 body 上,开关随时生效 */
+body.mmtk-collapse-code .mes_text pre {
+    max-height: 60vh;
+    overflow: auto;
+}
+
+/* 扩展设置面板标题上的禁用按钮 */
+.mmtk_panel_toggle {
+    margin-left: auto;
+    margin-right: 10px;
+    cursor: pointer;
+    opacity: 0.75;
+    font-size: 1.2em;
+    flex: 0 0 auto;
+    /* 点击区域要够大,否则手机和平板上根本按不准 */
+    padding: 6px 8px;
+    /* 确保自己在最上层且能接收点击,别被面板标题的伪元素盖住 */
+    position: relative;
+    z-index: 5;
+    pointer-events: auto;
+}
+
+.mmtk_panel_toggle.mmtk_locked {
+    cursor: not-allowed;
+    opacity: 0.35;
+}
+
+.mmtk_panel_toggle:hover {
+    opacity: 1;
+}
+
+.mmtk_panel_toggle.mmtk_off {
+    color: var(--warning);
+    opacity: 1;
+}
+
+/* 状态小球:平时是只安静的蝴蝶,有东西在传时才转。可拖动。
+   做成小球是因为常驻横条会压住顶部导航栏(2026-08-16 道长提)。 */
+#mmtk_ball {
+    position: fixed;
+    top: 70px;
+    right: 12px;
+    z-index: 10000;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--SmartThemeBorderColor);
+    background-color: var(--SmartThemeBlurTintColor);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    cursor: grab;
+    user-select: none;
+    /* 拖动时别让浏览器抢去做滚动手势 */
+    touch-action: none;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+}
+
+#mmtk_ball:hover,
+#mmtk_ball.mmtk_busy,
+#mmtk_ball.mmtk_failed {
+    opacity: 1;
+}
+
+/* 有保存失败且还没被看过:一直红着,点开详情才撤 */
+#mmtk_ball.mmtk_failed {
+    border-color: var(--warning);
+    box-shadow: 0 0 0 2px var(--warning), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+#mmtk_ball:active {
+    cursor: grabbing;
+}
+
+#mmtk_ball .mmtk_ball_icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* 只有在传东西时才转 */
+#mmtk_ball.mmtk_busy .mmtk_ball_icon {
+    animation: mmtk_spin 1.4s linear infinite;
+}
+
+#mmtk_ball .mmtk_ball_count:not(:empty) {
+    position: absolute;
+    right: -2px;
+    top: -2px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background-color: var(--warning);
+    color: var(--black70a);
+    font-size: 10px;
+    line-height: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+#mmtk_ball_detail {
+    position: fixed;
+    z-index: 10001;
+    max-width: min(320px, 90vw);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    background-color: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    font-size: calc(var(--mainFontSize) * 0.85);
+}
+
+#mmtk_ball_detail .mmtk_status_item {
+    padding: 2px 0;
+}
+
+#mmtk_ball_detail .mmtk_detail_title {
+    margin-top: 6px;
+    opacity: 0.6;
+    font-size: calc(var(--mainFontSize) * 0.78);
+}
+
+#mmtk_ball_detail .mmtk_detail_title:first-child {
+    margin-top: 0;
+}
+
+/* 已完成的记录,不抢眼 */
+#mmtk_ball_detail .mmtk_status_item.mmtk_done {
+    opacity: 0.75;
+}
+
+#mmtk_ball_detail .mmtk_status_item.mmtk_done.mmtk_bad {
+    opacity: 1;
+    color: var(--warning);
+}
+
+/* 超过 5 秒就变色,让人知道这次是真的慢,不是错觉 */
+#mmtk_ball_detail .mmtk_status_item.mmtk_slow {
+    color: var(--warning);
+    font-weight: bold;
+}
+
+@keyframes mmtk_spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 改了扩展开关后底部常驻的刷新条 */
+#mmtk_reload_bar {
+    position: fixed;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 90vw;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    background-color: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    font-size: calc(var(--mainFontSize) * 0.9);
+}
+
+/* 弹窗内容不在 #mmtk_settings 里,选择器要独立写 */
+.mmtk_popup {
+    text-align: left;
+    line-height: 1.5;
+}
+
+.mmtk_popup hr {
+    margin: 10px 0;
+    opacity: 0.3;
+}
+
+.mmtk_popup .mmtk_ok {
+    color: var(--golden);
+    font-weight: bold;
+}
+
+.mmtk_popup .mmtk_bad {
+    color: var(--warning);
+}
+
+.mmtk_popup .mmtk_hint {
+    font-size: calc(var(--mainFontSize) * 0.85);
+    opacity: 0.7;
+}
+
+.mmtk_popup_list {
+    max-height: 30vh;
+    overflow-y: auto;
+    margin: 6px 0;
+    padding: 6px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
+    font-size: calc(var(--mainFontSize) * 0.9);
+    word-break: break-all;
+}
+
+#mmtk_settings .mmtk_note,
+#mmtk_settings .mmtk_result {
+    padding: 8px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+}
