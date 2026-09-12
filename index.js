@@ -28,7 +28,7 @@ import { hljs } from '../../../../lib.js';
 
 /** 跟 manifest.json 的 version 手动保持一致。酒馆加载扩展脚本的 URL 不带版本号
  *  (extensions.js:819),浏览器和 CDN 都可能喂旧副本,靠这行在控制台辨认在跑哪一版。 */
-const VERSION = '0.30.0';
+const VERSION = '0.31.0';
 
 /** 2026-08-17 连目录带内部 id 一起从「美梦工具箱」改成「织梦者」。
  *
@@ -1316,7 +1316,28 @@ function positionBallDetail() {
     detail.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - detail.offsetWidth - 8))}px`;
 }
 
+/** 清掉蝴蝶和它的详情面板,顺手停掉那个每秒跑一次的定时器 */
+function removeStatusBall() {
+    ballDetailOpen = false;
+    document.getElementById('mmtk_ball')?.remove();
+    document.getElementById('mmtk_ball_detail')?.remove();
+    if (statusTimer) {
+        clearInterval(statusTimer);
+        statusTimer = null;
+    }
+}
+
 function renderStatusBar() {
+    // 蝴蝶只跟着「保存状态条」这一个开关走(2026-09-12 道长报的 bug:
+    // 关掉那个开关之后,下次开页面蝴蝶照样冒出来,只是不转了)。
+    // 病根在 applyModules 那行 `saveStatus || startupPrefetch || generationRelay`:
+    // 抢跑默认开着,于是 fetch 钩子照装,装的时候顺手 renderStatusBar() 把蝴蝶挂了出来。
+    // fetch 钩子是别的模块要用的,不能关;能关的是图标,所以判断挪到这儿来。
+    if (!getSettings().modules.saveStatus) {
+        removeStatusBall();
+        return;
+    }
+
     const busy = inFlight.size;
 
     // 小球常驻,不再来一次消失一次:平时是只安静的蝴蝶,存东西时才转。
@@ -1487,6 +1508,23 @@ function enqueueSettingsSave(input, init) {
     });
 }
 
+/** fetch 钩子该不该装:保存状态条、开局抢跑、生成中继,任一开着都得装 */
+function fetchHookNeeded() {
+    const m = getSettings().modules;
+    return Boolean(m.saveStatus || m.startupPrefetch || m.generationRelay);
+}
+
+/**
+ * 「保存状态条」那个开关变动时走这里。
+ * 钩子按 fetchHookNeeded() 决定装不装(别的模块还要用),图标另算。
+ * 原来直接把开关的值传给 applySaveStatusModule,结果取消勾选会把 window.fetch 整个还原,
+ * 顺带把抢跑和生成中继的钩子也拆了。
+ */
+function applyStatusBall() {
+    applySaveStatusModule(fetchHookNeeded());
+    renderStatusBar();
+}
+
 function applySaveStatusModule(enabled) {
     if (!enabled) {
         if (originalFetch) {
@@ -1494,13 +1532,7 @@ function applySaveStatusModule(enabled) {
             originalFetch = null;
         }
         inFlight.clear();
-        ballDetailOpen = false;
-        document.getElementById('mmtk_ball')?.remove();
-        document.getElementById('mmtk_ball_detail')?.remove();
-        if (statusTimer) {
-            clearInterval(statusTimer);
-            statusTimer = null;
-        }
+        removeStatusBall();
         return;
     }
 
@@ -2300,6 +2332,59 @@ async function onBenchmarkClick() {
     }
 }
 
+/**
+ * 开关 id ↔ 设置里的键名。一键关闭和逐个绑定共用这一份,
+ * 免得以后加了新模块却忘了把它算进"全部关掉"里。
+ */
+const MODULE_ROWS = [
+    ['#mmtk_module_checkup', 'startupCheckup'],
+    ['#mmtk_module_css', 'cssDebounce'],
+    ['#mmtk_module_preset', 'presetToggleDebounce'],
+    ['#mmtk_module_hljs', 'disableHighlight'],
+    ['#mmtk_module_collapse', 'collapseCode'],
+    ['#mmtk_module_swipe', 'swipeGuard'],
+    ['#mmtk_module_regex', 'regexBatch'],
+    // 这项目前没有勾选框,但「全部关掉」要连它一起关
+    ['#mmtk_module_small', 'smallPageOption'],
+    ['#mmtk_module_panel', 'panelToggles'],
+    ['#mmtk_module_status', 'saveStatus'],
+    ['#mmtk_module_queue', 'saveQueue'],
+    ['#mmtk_module_logsave', 'logSaveCallers'],
+    ['#mmtk_module_prefetch', 'startupPrefetch'],
+    ['#mmtk_module_relay', 'generationRelay'],
+];
+
+/** 能当场收回的模块,当场收回;接管了别人处理器的那两个只能等刷新 */
+function applyModulesLive() {
+    const { modules } = getSettings();
+    applyHighlightModule(modules.disableHighlight);
+    applyCollapseCodeModule(modules.collapseCode);
+    applySwipeGuardModule(modules.swipeGuard);
+    applyRegexBatchModule(modules.regexBatch);
+    applySmallPageOptionModule(modules.smallPageOption);
+    applyPanelToggleModule(modules.panelToggles);
+    applyStatusBall();
+}
+
+/**
+ * 一键把织梦者自己的东西全关掉 / 恢复默认(2026-09-12 道长要的)。
+ * 关掉之后织梦者只剩这块设置面板,对酒馆一个字都不改,
+ * 用来排查"到底是不是织梦者干的"。
+ */
+function setAllModules(on) {
+    const settings = getSettings();
+    for (const [sel, key] of MODULE_ROWS) {
+        settings.modules[key] = on ? defaultSettings.modules[key] : false;
+        $(sel).prop('checked', settings.modules[key]);
+    }
+    saveSettingsDebounced();
+    applyModulesLive();
+    // cssDebounce / presetToggleDebounce 接管了酒馆自己的处理器,还不回去,只能刷新
+    const needReload = ['cssDebounce', 'presetToggleDebounce'].some(k => !settings.modules[k]);
+    if (on) toastr.success('已恢复成默认那几项');
+    else toastr.info(needReload ? '刷新页面后彻底还原' : '', '织梦者的功能已全部关掉');
+}
+
 /** 按当前开关状态把各模块挂上去。只在启动时调一次。 */
 function applyModules() {
     const { modules } = getSettings();
@@ -2313,8 +2398,8 @@ function applyModules() {
     applyRegexBatchModule(modules.regexBatch);
     applySmallPageOptionModule(modules.smallPageOption);
     applyPanelToggleModule(modules.panelToggles);
-    // 抢跑要靠 fetch 包装去认领,所以两者任一开着都得装
-    applySaveStatusModule(modules.saveStatus || modules.startupPrefetch || modules.generationRelay);
+    // 抢跑要靠 fetch 包装去认领,所以任一开着都得装钩子;蝴蝶图标另跟 saveStatus 走
+    applyStatusBall();
 }
 
 /* ==========================================================================
@@ -2597,6 +2682,13 @@ function renderPanel() {
                         <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                     </div>
                     <div class="inline-drawer-content">
+                    <div class="mmtk_buttons">
+                        <div id="mmtk_all_off" class="menu_button">全部关掉</div>
+                        <div id="mmtk_all_default" class="menu_button">恢复默认</div>
+                    </div>
+                    <div class="mmtk_hint">「全部关掉」把织梦者自己的功能一次全停掉,只剩这块设置面板,对酒馆一个字都不改。
+                        排查问题、或者暂时不想让它插手的时候用。下面每一项也能单独开关。</div>
+                    <hr>
                     <label class="checkbox_label">
                         <input id="mmtk_module_checkup" type="checkbox" ${settings.modules.startupCheckup ? 'checked' : ''}>
                         <span>开屏减负</span>
@@ -2850,11 +2942,14 @@ function renderPanel() {
     bindModule('#mmtk_module_swipe', 'swipeGuard', applySwipeGuardModule);
     bindModule('#mmtk_module_regex', 'regexBatch', applyRegexBatchModule);
     bindModule('#mmtk_module_panel', 'panelToggles', applyPanelToggleModule);
-    bindModule('#mmtk_module_status', 'saveStatus', applySaveStatusModule);
+    bindModule('#mmtk_module_status', 'saveStatus', () => applyStatusBall());
     bindModule('#mmtk_module_queue', 'saveQueue');
     bindModule('#mmtk_module_logsave', 'logSaveCallers');
-    bindModule('#mmtk_module_prefetch', 'startupPrefetch');
-    bindModule('#mmtk_module_relay', 'generationRelay');
+    // 这两个也会左右钩子装不装,改完要重算一次
+    bindModule('#mmtk_module_prefetch', 'startupPrefetch', () => applyStatusBall());
+    bindModule('#mmtk_module_relay', 'generationRelay', () => applyStatusBall());
+    $('#mmtk_all_off').on('click', () => setAllModules(false));
+    $('#mmtk_all_default').on('click', () => setAllModules(true));
     $('#mmtk_swipe_threshold').on('input', function () {
         const value = Number($(this).val());
         getSettings().swipeThreshold = value;
