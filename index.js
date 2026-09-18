@@ -28,7 +28,7 @@ import { hljs } from '../../../../lib.js';
 
 /** 跟 manifest.json 的 version 手动保持一致。酒馆加载扩展脚本的 URL 不带版本号
  *  (extensions.js:819),浏览器和 CDN 都可能喂旧副本,靠这行在控制台辨认在跑哪一版。 */
-const VERSION = '0.32.0';
+const VERSION = '0.32.1';
 
 /** 2026-08-17 连目录带内部 id 一起从「美梦工具箱」改成「织梦者」。
  *
@@ -595,7 +595,26 @@ async function onCheckupClick() {
  * 自定义 CSS 越长越明显。顺带它还每次把内容写回 textarea,纯属多余。
  * 修法:接管这个处理器,存盘照旧,只把"应用样式"那一下防抖。
  * ========================================================================== */
-function applyCssDebounceModule() {
+/** 接管前酒馆自己绑在 #customCSS 上的 input 处理器,关模块时原样还回去(道长:关掉就得真关,不能等刷新) */
+let originalCssHandlers = null;
+
+function applyCssDebounceModule(enabled = true) {
+    const el = document.getElementById('customCSS');
+    if (!el) return;
+
+    if (!enabled) {
+        if (!originalCssHandlers) return;
+        $('#customCSS').off('input');
+        for (const handler of originalCssHandlers) $('#customCSS').on('input', handler);
+        originalCssHandlers = null;
+        return;
+    }
+
+    if (originalCssHandlers) return; // 已经接管了,别叠两层
+
+    // jQuery 把处理器记在 $._data 里,先抄一份再摘
+    originalCssHandlers = (($._data(el, 'events') || {}).input || []).map(x => x.handler);
+
     const applyNow = () => {
         const styleId = 'custom-style';
         let style = document.getElementById(styleId);
@@ -635,11 +654,26 @@ function applyCssDebounceModule() {
  * 而 419 行就摆着现成的 renderDebounced,别的地方都在用,唯独这条路没用。
  * 修法:接管 handleToggle,数据照改照存,图标立刻翻给人看,重画走防抖。
  * ========================================================================== */
-function applyPresetToggleModule() {
+/** 接管前 promptManager 自己的 handleToggle,关模块时还回去 */
+let originalHandleToggle = null;
+
+function applyPresetToggleModule(enabled = true) {
     if (!promptManager || typeof promptManager.renderDebounced !== 'function') {
         console.warn('[织梦者] 拿不到 promptManager,预设开关模块跳过');
         return false;
     }
+
+    if (!enabled) {
+        if (!originalHandleToggle) return true;
+        promptManager.handleToggle = originalHandleToggle;
+        originalHandleToggle = null;
+        // 监听器是重画时逐行绑的,得重画一次原来的才真正挂回去
+        promptManager.render(false);
+        return true;
+    }
+
+    if (originalHandleToggle) return true; // 已经接管了
+    originalHandleToggle = promptManager.handleToggle;
 
     promptManager.handleToggle = (event) => {
         const prefix = promptManager.configuration?.prefix ?? '';
@@ -2357,6 +2391,8 @@ const MODULE_ROWS = [
 /** 能当场收回的模块,当场收回;接管了别人处理器的那两个只能等刷新 */
 function applyModulesLive() {
     const { modules } = getSettings();
+    applyCssDebounceModule(modules.cssDebounce);
+    applyPresetToggleModule(modules.presetToggleDebounce);
     applyHighlightModule(modules.disableHighlight);
     applyCollapseCodeModule(modules.collapseCode);
     applySwipeGuardModule(modules.swipeGuard);
@@ -2379,10 +2415,8 @@ function setAllModules(on) {
     }
     saveSettingsDebounced();
     applyModulesLive();
-    // cssDebounce / presetToggleDebounce 接管了酒馆自己的处理器,还不回去,只能刷新
-    const needReload = ['cssDebounce', 'presetToggleDebounce'].some(k => !settings.modules[k]);
     if (on) toastr.success('已恢复成默认那几项');
-    else toastr.info(needReload ? '刷新页面后彻底还原' : '', '织梦者的功能已全部关掉');
+    else toastr.info('所有钩子都已当场摘掉', '织梦者的功能已全部关掉');
 }
 
 /** 按当前开关状态把各模块挂上去。只在启动时调一次。 */
@@ -2929,20 +2963,13 @@ function renderPanel() {
                 applyLive(enabled);
                 return;
             }
-
-            // 这两项是接管了别人的处理器,关掉要刷新才能把原来的还回去
-            if (enabled) {
-                if (key === 'cssDebounce') applyCssDebounceModule();
-                if (key === 'presetToggleDebounce') applyPresetToggleModule();
-                toastr.success('已开启');
-            } else {
-                toastr.info('刷新页面后彻底还原', '已关闭');
-            }
+            toastr.info('刷新页面后生效', enabled ? '已开启' : '已关闭');
         });
     };
 
-    bindModule('#mmtk_module_css', 'cssDebounce');
-    bindModule('#mmtk_module_preset', 'presetToggleDebounce');
+    // 这两项接管了酒馆自己的处理器,关掉时把原来的还回去,当场生效,不用刷新(道长 9/17:关掉就得真关)
+    bindModule('#mmtk_module_css', 'cssDebounce', applyCssDebounceModule);
+    bindModule('#mmtk_module_preset', 'presetToggleDebounce', applyPresetToggleModule);
     bindModule('#mmtk_module_hljs', 'disableHighlight', applyHighlightModule);
     bindModule('#mmtk_module_collapse', 'collapseCode', applyCollapseCodeModule);
     bindModule('#mmtk_module_swipe', 'swipeGuard', applySwipeGuardModule);
